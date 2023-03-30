@@ -2,9 +2,9 @@ import streamlit as st
 from haystack.document_stores import InMemoryDocumentStore
 from haystack.nodes import TfidfRetriever, FARMReader
 from haystack.pipelines import ExtractiveQAPipeline
-import tempfile
 
-from utils import pdf_to_text
+
+from utils import parse_file_to_doc, save_and_parse_file
 
 
 # Create a DocumentStore
@@ -23,14 +23,8 @@ docs=None
 
 if uploaded_file is not None:
     st.write("File uploaded successfully")
-    st.write(uploaded_file)
-    file_details = {"filename": uploaded_file.name, "content_type": uploaded_file.type}
-    # create a temporary folder
-    with tempfile.TemporaryDirectory() as temp_dir:
-        #Save the uploaded file to the temporary folder
-        file_path = temp_dir + '/' + uploaded_file.name
-        with open(file_path, 'wb') as f:
-            f.write(uploaded_file.getbuffer())
-            docs = pdf_to_text(file_path, file_details)
+    
+    # Parse file to doc
+    docs = save_and_parse_file(uploaded_file)
 
 st.write(docs)
