@@ -46,6 +46,19 @@ if button or st.session_state.get("submit"):
         # Get answers from pipeline
         pipe = qa_pipeline(document_store)
         results = pipe.run(query=question, 
-                           params={"Retriever": {"top_k": 3}, "Reader": {"top_k": 3}})
-    st.write(results)
-
+                           params={"Retriever": {"top_k": 3}, "Reader": {"top_k": 2}})
+    
+    st.markdown("### Answers")
+    st.write(results["answers"])
+    answer_1 = results["answers"][0]
+    answer_2 = results["answers"][1]
+    st.markdown(f" 1st answer is: **{answer_1.answer}**")
+    st.markdown(f" Context: **{answer_1.context}**")
+    st.markdown(f" Source name is **{answer_1.meta['filename']}**")
+    
+    st.divider()
+    
+    st.markdown(f" 2nd answer is: **{answer_2.answer}**")
+    st.markdown(f" Context: **{answer_2.context}**")
+    st.markdown(f" Source name is **{answer_2.meta['filename']}**")
+    st.session_state["submit"] = False
