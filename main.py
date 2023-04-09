@@ -1,50 +1,51 @@
 import streamlit as st
 from haystack.document_stores import InMemoryDocumentStore
-from haystack.nodes import TfidfRetriever, FARMReader
-from haystack.pipelines import ExtractiveQAPipeline
+from utils import save_and_parse_file, qa_pipeline
 
 
-from utils import parse_file_to_doc, save_and_parse_file
+import logging
+logging.basicConfig(format="%(levelname)s - %(name)s -  %(message)s", level=logging.WARNING)
+logging.getLogger("haystack").setLevel(logging.INFO)
 
 
 # Create a DocumentStore
 document_store = InMemoryDocumentStore()
 
 
+def clear_submit():
+    st.session_state["submit"] = False
+
 # Upload file
 uploaded_file = st.file_uploader(
     "Upload a pdf, docx, txt or csv file",
     type = ['pdf', 'docx', 'txt', 'csv'],
     help="Upload a pdf, docx, txt or csv file - scanned documents are not supported yet.",
+    on_change=clear_submit,
     #accept_multiple_files=True
     )
 
-docs=None
+doc=None
 
 if uploaded_file is not None:
     st.write("File uploaded successfully")
-    
     # Parse file to doc
-    docs = save_and_parse_file(uploaded_file)
-    
+    doc = save_and_parse_file(uploaded_file)
     # Add docs to document store
-    document_store.write_documents(docs)
-
-# Create retriever
-retriever = TfidfRetriever(document_store=document_store)
-
-# Create reader
-reader = FARMReader(model_name_or_path="deepset/roberta-base-squad2", use_gpu=False)
-
-# Create pipeline
-pipe = ExtractiveQAPipeline(reader, retriever)
+    document_store.write_documents(doc)
 
 
 # User is give an inout box to ask a question
 question = st.text_input("Ask a question",
-    placeholder="Ask a question about your document?")
-if question is not None:
-    # Get answers from pipeline
-    results = pipe.run(query=question, top_k_retriever=10, top_k_reader=5)
+                         placeholder="Ask a question about your document?")
+#Button to submit the question
+button = st.button("Submit")
+
+if button or st.session_state.get("submit"):
+    if question is not None:
+        st.session_state["submit"] = True
+        # Get answers from pipeline
+        pipe = qa_pipeline(document_store)
+        results = pipe.run(query=question, 
+                           params={"Retriever": {"top_k": 3}, "Reader": {"top_k": 3}})
     st.write(results)
 
