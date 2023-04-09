@@ -26,5 +26,25 @@ if uploaded_file is not None:
     
     # Parse file to doc
     docs = save_and_parse_file(uploaded_file)
+    
+    # Add docs to document store
+    document_store.write_documents(docs)
 
-st.write(docs)
+# Create retriever
+retriever = TfidfRetriever(document_store=document_store)
+
+# Create reader
+reader = FARMReader(model_name_or_path="deepset/roberta-base-squad2", use_gpu=False)
+
+# Create pipeline
+pipe = ExtractiveQAPipeline(reader, retriever)
+
+
+# User is give an inout box to ask a question
+question = st.text_input("Ask a question",
+    placeholder="Ask a question about your document?")
+if question is not None:
+    # Get answers from pipeline
+    results = pipe.run(query=question, top_k_retriever=10, top_k_reader=5)
+    st.write(results)
+
