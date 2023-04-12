@@ -1,7 +1,7 @@
 import streamlit as st
 from haystack.document_stores import InMemoryDocumentStore
 from utils import save_and_parse_file, qa_pipeline
-
+from sidebar import sidebar
 
 import logging
 logging.basicConfig(format="%(levelname)s - %(name)s -  %(message)s", level=logging.WARNING)
@@ -11,10 +11,18 @@ logging.getLogger("haystack").setLevel(logging.INFO)
 # Create a DocumentStore
 document_store = InMemoryDocumentStore()
 
+#Set app layout to wide
+st.set_page_config(layout="wide", page_title="Document Search and Question Answering App")
+
+# Add sidebar 
+sidebar()
 
 def clear_submit():
     st.session_state["submit"] = False
 
+st.image("NOC logo.PNG", width=150)
+st.markdown('#')
+st.subheader("Document Search and Question Answering App")
 # Upload file
 uploaded_file = st.file_uploader(
     "Upload a pdf, docx, txt or csv file",
@@ -42,23 +50,38 @@ button = st.button("Submit")
 
 if button or st.session_state.get("submit"):
     if question is not None:
-        st.session_state["submit"] = True
-        # Get answers from pipeline
-        pipe = qa_pipeline(document_store)
-        results = pipe.run(query=question, 
-                           params={"Retriever": {"top_k": 3}, "Reader": {"top_k": 2}})
+        try:
+            st.session_state["submit"] = True
+            # Get answers from pipeline
+            pipe = qa_pipeline(document_store)
+            
+            with st.spinner("Searching for answers..."):
+                results = pipe.run(query=question, 
+                                params={"Retriever": {"top_k": 3}, "Reader": {"top_k": 2}})
+        
+            st.success('Done!')
+            st.markdown("#### Answers")
+            #st.write(results)
+            try:
+                answer_1 = results["answers"][0]
+                answer_2 = results["answers"][1]
+                st.markdown(f" 1st answer is: **{answer_1.answer}**")
+                st.markdown(f" 1st answer score is: **{round(answer_1.score,2)}**")
+                st.markdown(f" Context: **{answer_1.context}**")
+                st.markdown(f" Source name is **{answer_1.meta['filename']}**")
+                
+                st.divider()
+                
+                st.markdown(f" 2nd answer is: **{answer_2.answer}**")
+                st.markdown(f" 2nd answer score is: **{round(answer_2.score,2)}**")
+                st.markdown(f" Context: **{answer_2.context}**")
+                st.markdown(f" Source name is **{answer_2.meta['filename']}**")
+                st.session_state["submit"] = False
+            except IndexError:
+                st.error("**No answers found**")
     
-    st.markdown("### Answers")
-    st.write(results["answers"])
-    answer_1 = results["answers"][0]
-    answer_2 = results["answers"][1]
-    st.markdown(f" 1st answer is: **{answer_1.answer}**")
-    st.markdown(f" Context: **{answer_1.context}**")
-    st.markdown(f" Source name is **{answer_1.meta['filename']}**")
+        except:
+                st.error("Please ask a question")
+            
+    st.write(document_store.get_document_count())
     
-    st.divider()
-    
-    st.markdown(f" 2nd answer is: **{answer_2.answer}**")
-    st.markdown(f" Context: **{answer_2.context}**")
-    st.markdown(f" Source name is **{answer_2.meta['filename']}**")
-    st.session_state["submit"] = False

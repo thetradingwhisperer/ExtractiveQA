@@ -18,9 +18,12 @@ def parse_file_to_doc(filepath, filedetails, file_type=None):
         Document object
     """
     if file_type == "pdf":
-        doc = PDFToTextConverter(remove_numeric_tables=True,
-                                    valid_languages=["en"],
-                                    ).convert(filepath, meta=filedetails)
+        try:
+            doc = PDFToTextConverter(remove_numeric_tables=True,
+                                        valid_languages=["en"],
+                                        ).convert(filepath, meta=filedetails)
+        except:
+            st.error("Error converting pdf to text")
     elif file_type == "docx":
         doc = DocxToTextConverter(remove_numeric_tables=True,
                                     valid_languages=["en"],
