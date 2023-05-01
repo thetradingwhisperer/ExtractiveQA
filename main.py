@@ -14,7 +14,7 @@ document_store = InMemoryDocumentStore()
 #Set app layout to wide
 st.set_page_config(layout="wide", page_title="Document Search and Question Answering App")
 
-# Add sidebar 
+# Add sidebar
 sidebar()
 
 def clear_submit():
@@ -29,17 +29,19 @@ uploaded_file = st.file_uploader(
     type = ['pdf', 'docx', 'txt', 'csv'],
     help="Upload a pdf, docx, txt or csv file - scanned documents are not supported yet.",
     on_change=clear_submit,
-    #accept_multiple_files=True
+    accept_multiple_files=True
     )
 
-doc=None
+docs=None
 
 if uploaded_file is not None:
-    st.write("File uploaded successfully")
-    # Parse file to doc
-    doc = save_and_parse_file(uploaded_file)
-    # Add docs to document store
-    document_store.write_documents(doc)
+    if len(uploaded_file) >= 1:
+        st.write("File uploaded successfully")
+        # Parse file to doc
+        docs = [save_and_parse_file(file) for file in uploaded_file]
+        # Add docs to document store
+        for doc in docs:
+            document_store.write_documents(doc)
 
 
 # User is give an inout box to ask a question
