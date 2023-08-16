@@ -56,15 +56,15 @@ button = st.button("Submit")
 
 if button or st.session_state.get("submit"):
     if question is not None:
-        try:
+        if True:
             st.session_state["submit"] = True
             # Get answers from pipeline
             pipe = qa_pipeline(document_store)
             
             with st.spinner("Searching for answers..."):
-                results = pipe.run(query=question, 
-                                params={"Retriever": {"top_k": 3}, "Reader": {"top_k": 2}})
-        
+                results = pipe.run(query=question, params={"retriever": {"top_k": 4}})
+            st.write(results)
+            
             st.success('Done!')
             st.markdown("#### Answers")
             #st.write(results)
@@ -86,7 +86,7 @@ if button or st.session_state.get("submit"):
             except IndexError:
                 st.error("**No answers found**")
     
-        except:
+        else:
                 st.error("Please ask a question")
             
     st.write(document_store.get_document_count())
